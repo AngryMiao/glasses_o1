@@ -1,0 +1,635 @@
+basePath: /api
+definitions:
+  device.BindDeviceRequest:
+    properties:
+      device_id:
+        type: string
+    type: object
+  device.BindDeviceResponse:
+    properties:
+      device_key:
+        description: 设备长期密钥S（明文，仅下发一次）
+        type: string
+      message:
+        description: 错误信息（失败时）
+        type: string
+      success:
+        description: 是否成功
+        type: boolean
+      token:
+        description: 30天有效期DeviceToken（成功时）
+        type: string
+    type: object
+  device.RefreshTokenResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+      token:
+        type: string
+    type: object
+  device.UnbindDeviceRequest:
+    properties:
+      bind_key:
+        type: string
+      device_id:
+        type: string
+    required:
+    - bind_key
+    - device_id
+    type: object
+  device.UnbindDeviceResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  models.CreateAIConfigRequest:
+    properties:
+      api_key:
+        type: string
+      base_url:
+        type: string
+      config_name:
+        type: string
+      description:
+        type: string
+      function_name:
+        description: 不能为空，且长度必须大于0
+        minLength: 1
+        type: string
+      llm_type:
+        type: string
+      max_tokens:
+        type: integer
+      mcp_server_url:
+        type: string
+      model_name:
+        type: string
+      parameters:
+        additionalProperties: true
+        type: object
+      priority:
+        type: integer
+      temperature:
+        type: number
+    required:
+    - config_name
+    - function_name
+    type: object
+  models.UpdateAIConfigRequest:
+    properties:
+      api_key:
+        type: string
+      base_url:
+        type: string
+      config_name:
+        type: string
+      description:
+        type: string
+      function_name:
+        type: string
+      is_active:
+        type: boolean
+      llm_type:
+        type: string
+      max_tokens:
+        type: integer
+      mcp_server_url:
+        type: string
+      model_name:
+        type: string
+      parameters:
+        additionalProperties: true
+        type: object
+      priority:
+        type: integer
+      temperature:
+        type: number
+    type: object
+  ota.ErrorResponse:
+    properties:
+      message:
+        example: 缺少 device-id
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  ota.OtaFirmwareResponse:
+    properties:
+      firmware:
+        properties:
+          url:
+            example: /ota_bin/1.0.3.bin
+            type: string
+          version:
+            example: 1.0.3
+            type: string
+        type: object
+      server_time:
+        properties:
+          timestamp:
+            example: 1688443200000
+            type: integer
+          timezone_offset:
+            example: 480
+            type: integer
+        type: object
+      websocket:
+        properties:
+          url:
+            example: wss://example.com/ota
+            type: string
+        type: object
+    type: object
+  ota.OtaRequest:
+    properties:
+      application:
+        properties:
+          version:
+            example: 1.0.0
+            type: string
+        type: object
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: 怒喵 API 文档
+  version: "1.0"
+paths:
+  /api/ai-configs:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的所有AI配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户AI配置列表
+      tags:
+      - AI配置管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的AI配置
+      parameters:
+      - description: 配置信息
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateAIConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 创建AI配置
+      tags:
+      - AI配置管理
+  /api/ai-configs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的AI配置
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 配置不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 删除AI配置
+      tags:
+      - AI配置管理
+    get:
+      consumes:
+      - application/json
+      description: 根据配置ID获取配置详情
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 配置不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取配置详情
+      tags:
+      - AI配置管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定的AI配置
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新信息
+        in: body
+        name: config
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateAIConfigRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 更新成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 配置不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 更新AI配置
+      tags:
+      - AI配置管理
+  /api/ai-configs/{id}/priority:
+    patch:
+      consumes:
+      - application/json
+      description: 设置指定AI配置的优先级
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 优先级信息
+        in: body
+        name: priority
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 配置不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 设置配置优先级
+      tags:
+      - AI配置管理
+  /api/ai-configs/{id}/toggle:
+    patch:
+      consumes:
+      - application/json
+      description: 启用或禁用指定的AI配置
+      parameters:
+      - description: 配置ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 状态信息
+        in: body
+        name: status
+        required: true
+        schema:
+          additionalProperties:
+            type: boolean
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 操作成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 配置不存在
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 切换配置状态
+      tags:
+      - AI配置管理
+  /device/:
+    options:
+      consumes:
+      - '*/*'
+      description: 处理 Device 接口的 OPTIONS 预检请求，返回 200
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Device 预检请求
+      tags:
+      - Device
+  /device/bind:
+    post:
+      consumes:
+      - application/json
+      description: 绑定设备到用户账户，生成设备密钥和token
+      parameters:
+      - description: Bearer <UserJWT>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 设备绑定请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/device.BindDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 绑定成功
+          schema:
+            $ref: '#/definitions/device.BindDeviceResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/device.BindDeviceResponse'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/device.BindDeviceResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/device.BindDeviceResponse'
+      summary: 设备绑定
+      tags:
+      - Device
+  /device/refresh_token:
+    get:
+      consumes:
+      - application/json
+      description: 刷新设备的JWT token，延长有效期
+      parameters:
+      - description: 设备ID
+        in: query
+        name: device_id
+        required: true
+        type: string
+      - description: 当前设备token
+        in: query
+        name: token
+        required: true
+        type: string
+      - description: 设备绑定密钥
+        in: query
+        name: bind_key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 刷新成功
+          schema:
+            $ref: '#/definitions/device.RefreshTokenResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/device.RefreshTokenResponse'
+        "401":
+          description: 认证失败
+          schema:
+            $ref: '#/definitions/device.RefreshTokenResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/device.RefreshTokenResponse'
+      summary: 刷新设备token
+      tags:
+      - Device
+  /device/unbind:
+    post:
+      consumes:
+      - application/json
+      description: 解绑指定设备，将数据库中is_active字段设置为false
+      parameters:
+      - description: 设备解绑请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/device.UnbindDeviceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 解绑成功
+          schema:
+            $ref: '#/definitions/device.UnbindDeviceResponse'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/device.UnbindDeviceResponse'
+        "404":
+          description: 设备未找到
+          schema:
+            $ref: '#/definitions/device.UnbindDeviceResponse'
+        "500":
+          description: 服务器内部错误
+          schema:
+            $ref: '#/definitions/device.UnbindDeviceResponse'
+      summary: 设备解绑
+      tags:
+      - Device
+  /ota/:
+    get:
+      description: 获取 OTA 服务状态和 WebSocket 地址，供设备查询
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: 'OTA interface is running, websocket address: ws://...'
+          schema:
+            type: string
+      summary: 获取 OTA 状态
+      tags:
+      - OTA
+    options:
+      consumes:
+      - '*/*'
+      description: 处理 OTA 接口的 OPTIONS 预检请求，返回 200
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: OTA 预检请求
+      tags:
+      - OTA
+    post:
+      consumes:
+      - application/json
+      description: 设备上传信息后，返回最新固件版本和下载地址
+      parameters:
+      - description: 设备ID
+        in: header
+        name: device-id
+        required: true
+        type: string
+      - description: 请求体
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ota.OtaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ota.OtaFirmwareResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ota.ErrorResponse'
+      summary: 上传设备信息获取最新固件
+      tags:
+      - OTA
+  /ota_bin/{filename}:
+    get:
+      description: 根据文件名下载 OTA 固件
+      parameters:
+      - description: 固件文件名
+        in: path
+        name: filename
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件流
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ota.ErrorResponse'
+      summary: 下载 OTA 固件文件
+      tags:
+      - OTA
+swagger: "2.0"

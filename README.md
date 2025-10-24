@@ -1,4 +1,4 @@
-# Dialogue is All You Need (AM glass Backend)
+# Dialogue is All You Need (AM glasses Backend)
 
 English | [中文](#中文)
 
